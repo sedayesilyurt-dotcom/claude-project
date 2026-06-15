@@ -20,7 +20,6 @@
 
     .container { max-width: 1100px; margin: 32px auto; padding: 0 16px; }
 
-    /* Stats */
     .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
     .stat-card {
       background: white; border-radius: 10px; padding: 20px 24px;
@@ -32,7 +31,6 @@
     .stat-card .value.yellow { color: #d97706; }
     .stat-card .value.red { color: #dc2626; }
 
-    /* Form */
     .card { background: white; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.08); padding: 24px; margin-bottom: 24px; }
     .card h2 { font-size: 1rem; font-weight: 600; color: #374151; margin-bottom: 16px; }
     .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
@@ -52,7 +50,6 @@
     }
     .btn:hover { background: #16304f; }
 
-    /* Table */
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: .9rem; }
     thead th {
@@ -80,7 +77,6 @@
     }
     .del-btn:hover { color: #dc2626; background: #fee2e2; }
 
-    /* Filter */
     .toolbar {
       display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
       margin-bottom: 14px;
@@ -101,7 +97,6 @@
 
 <div class="container">
 
-  <!-- Stats -->
   <div class="stats">
     <div class="stat-card"><div class="label">Toplam Müşteri</div><div class="value" id="s-total">0</div></div>
     <div class="stat-card"><div class="label">Yeni</div><div class="value" id="s-yeni">0</div></div>
@@ -110,7 +105,6 @@
     <div class="stat-card"><div class="label">İptal</div><div class="value red" id="s-iptal">0</div></div>
   </div>
 
-  <!-- Add Form -->
   <div class="card">
     <h2>Yeni Müşteri Ekle</h2>
     <div class="form-row">
@@ -148,7 +142,6 @@
     <button class="btn" onclick="addCustomer()">Ekle</button>
   </div>
 
-  <!-- Table -->
   <div class="card">
     <h2>Müşteri Listesi</h2>
     <div class="toolbar">
@@ -241,7 +234,6 @@
       (!fd || c.status === fd)
     );
 
-    // stats (always over all customers)
     document.getElementById('s-total').textContent      = customers.length;
     document.getElementById('s-yeni').textContent       = customers.filter(c=>c.status==='yeni').length;
     document.getElementById('s-gorusme').textContent    = customers.filter(c=>c.status==='gorusme').length;
@@ -267,7 +259,7 @@
           <span class="badge ${c.status}">${LABELS[c.status]}</span>
         </td>
         <td style="color:#9ca3af;font-size:.82rem">${c.date}</td>
-        <td><button class="del-btn" onclick="deleteCustomer(${c.id})" title="Sil">✕</button></td>
+        <td><button class="del-btn" onclick="deleteCustomer(${c.id})" title="Sil">&#10005;</button></td>
       </tr>
     `).join('');
   }
