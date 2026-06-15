@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Müşteri Takip Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    header h1 { font-size: 1.4rem; font-weight: 600; }
+    header span { font-size: 1.6rem; }
+
+    .stats {
+      display: flex;
+      gap: 16px;
+      padding: 24px 32px 0;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px 24px;
+      flex: 1;
+      min-width: 140px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      border-left: 4px solid #ccc;
+    }
+
+    .stat-card.total   { border-color: #6c63ff; }
+    .stat-card.yeni    { border-color: #3b82f6; }
+    .stat-card.gorusme { border-color: #f59e0b; }
+    .stat-card.kapandi { border-color: #10b981; }
+    .stat-card.iptal   { border-color: #ef4444; }
+
+    .stat-card .label  { font-size: 0.78rem; color: #888; margin-bottom: 4px; }
+    .stat-card .value  { font-size: 1.8rem; font-weight: 700; }
+
+    .content {
+      padding: 24px 32px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .toolbar input[type="text"] {
+      flex: 1;
+      min-width: 180px;
+      padding: 9px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .toolbar input:focus { border-color: #6c63ff; }
+
+    .toolbar select {
+      padding: 9px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: #fff;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .btn {
+      padding: 9px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity .15s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #6c63ff; color: #fff; }
+    .btn-danger  { background: #ef4444; color: #fff; font-size: 0.8rem; padding: 6px 12px; }
+    .btn-edit    { background: #f0eeff; color: #6c63ff; font-size: 0.8rem; padding: 6px 12px; }
+
+    /* Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px 32px;
+      width: 100%;
+      max-width: 460px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+
+    .modal h2 { margin-bottom: 20px; font-size: 1.1rem; color: #1a1a2e; }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.82rem;
+      color: #555;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: #6c63ff; }
+
+    .form-group textarea { resize: vertical; min-height: 70px; }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .btn-secondary { background: #eee; color: #555; }
+
+    /* Table */
+    .table-wrap {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    thead th {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    tbody tr { border-bottom: 1px solid #f0f0f0; transition: background .1s; }
+    tbody tr:hover { background: #faf9ff; }
+    tbody tr:last-child { border-bottom: none; }
+
+    td { padding: 12px 16px; vertical-align: middle; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge-yeni      { background: #eff6ff; color: #3b82f6; }
+    .badge-gorusme   { background: #fffbeb; color: #d97706; }
+    .badge-kapandi   { background: #ecfdf5; color: #059669; }
+    .badge-iptal     { background: #fef2f2; color: #dc2626; }
+    .badge-takip     { background: #f5f3ff; color: #7c3aed; }
+
+    .ad-source {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      background: #f0eeff;
+      color: #6c63ff;
+      font-weight: 500;
+    }
+
+    .actions { display: flex; gap: 6px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #aaa;
+    }
+
+    .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+
+    @media (max-width: 600px) {
+      .stats { padding: 16px; }
+      .content { padding: 16px; }
+      header { padding: 14px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span>📊</span>
+  <h1>Müşteri Takip Dashboard</h1>
+</header>
+
+<div class="stats">
+  <div class="stat-card total">
+    <div class="label">Toplam Müşteri</div>
+    <div class="value" id="stat-total">0</div>
+  </div>
+  <div class="stat-card yeni">
+    <div class="label">Yeni</div>
+    <div class="value" id="stat-yeni">0</div>
+  </div>
+  <div class="stat-card gorusme">
+    <div class="label">Görüşmede</div>
+    <div class="value" id="stat-gorusme">0</div>
+  </div>
+  <div class="stat-card kapandi">
+    <div class="label">Kapandı</div>
+    <div class="value" id="stat-kapandi">0</div>
+  </div>
+  <div class="stat-card iptal">
+    <div class="label">İptal</div>
+    <div class="value" id="stat-iptal">0</div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="İsim veya telefon ara..." oninput="render()" />
+    <select id="filter-status" onchange="render()">
+      <option value="">Tüm Durumlar</option>
+      <option value="Yeni">Yeni</option>
+      <option value="Görüşmede">Görüşmede</option>
+      <option value="Takip">Takip</option>
+      <option value="Kapandı">Kapandı</option>
+      <option value="İptal">İptal</option>
+    </select>
+    <select id="filter-ad" onchange="render()">
+      <option value="">Tüm Reklamlar</option>
+      <option value="Facebook">Facebook</option>
+      <option value="Instagram">Instagram</option>
+      <option value="Google">Google</option>
+      <option value="TikTok">TikTok</option>
+      <option value="Referans">Referans</option>
+      <option value="Diğer">Diğer</option>
+    </select>
+    <button class="btn btn-primary" onclick="openModal()">+ Yeni Müşteri</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Müşteri Adı</th>
+          <th>Telefon</th>
+          <th>Reklam Kaynağı</th>
+          <th>Görüşme Durumu</th>
+          <th>Not</th>
+          <th>Tarih</th>
+          <th>İşlem</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+    <div class="empty-state" id="empty-state" style="display:none">
+      <div class="icon">📭</div>
+      <div>Henüz müşteri kaydı yok.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <h2 id="modal-title">Yeni Müşteri Ekle</h2>
+    <div class="form-group">
+      <label>Müşteri Adı *</label>
+      <input type="text" id="f-name" placeholder="Ad Soyad" />
+    </div>
+    <div class="form-group">
+      <label>Telefon Numarası *</label>
+      <input type="text" id="f-phone" placeholder="05XX XXX XX XX" />
+    </div>
+    <div class="form-group">
+      <label>Reklam Kaynağı</label>
+      <select id="f-ad">
+        <option value="Facebook">Facebook</option>
+        <option value="Instagram">Instagram</option>
+        <option value="Google">Google</option>
+        <option value="TikTok">TikTok</option>
+        <option value="Referans">Referans</option>
+        <option value="Diğer">Diğer</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Görüşme Durumu</label>
+      <select id="f-status">
+        <option value="Yeni">Yeni</option>
+        <option value="Görüşmede">Görüşmede</option>
+        <option value="Takip">Takip</option>
+        <option value="Kapandı">Kapandı</option>
+        <option value="İptal">İptal</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Not</label>
+      <textarea id="f-note" placeholder="Görüşme notu..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">İptal</button>
+      <button class="btn btn-primary" onclick="saveCustomer()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'musteri_takip_v1';
+  let customers = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  let editingId = null;
+
+  const statusBadge = {
+    'Yeni':       'badge-yeni',
+    'Görüşmede':  'badge-gorusme',
+    'Kapandı':    'badge-kapandi',
+    'İptal':      'badge-iptal',
+    'Takip':      'badge-takip',
+  };
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(customers));
+  }
+
+  function updateStats() {
+    document.getElementById('stat-total').textContent    = customers.length;
+    document.getElementById('stat-yeni').textContent     = customers.filter(c => c.status === 'Yeni').length;
+    document.getElementById('stat-gorusme').textContent  = customers.filter(c => c.status === 'Görüşmede').length;
+    document.getElementById('stat-kapandi').textContent  = customers.filter(c => c.status === 'Kapandı').length;
+    document.getElementById('stat-iptal').textContent    = customers.filter(c => c.status === 'İptal').length;
+  }
+
+  function render() {
+    const search = document.getElementById('search').value.toLowerCase();
+    const filterStatus = document.getElementById('filter-status').value;
+    const filterAd = document.getElementById('filter-ad').value;
+
+    let filtered = customers.filter(c => {
+      const matchSearch = c.name.toLowerCase().includes(search) || c.phone.includes(search);
+      const matchStatus = !filterStatus || c.status === filterStatus;
+      const matchAd     = !filterAd     || c.ad === filterAd;
+      return matchSearch && matchStatus && matchAd;
+    });
+
+    const tbody = document.getElementById('table-body');
+    const empty = document.getElementById('empty-state');
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+    } else {
+      empty.style.display = 'none';
+      tbody.innerHTML = filtered.map((c, i) => `
+        <tr>
+          <td style="color:#aaa;font-size:0.8rem">${i + 1}</td>
+          <td><strong>${esc(c.name)}</strong></td>
+          <td><a href="tel:${esc(c.phone)}" style="color:#6c63ff;text-decoration:none">${esc(c.phone)}</a></td>
+          <td><span class="ad-source">${esc(c.ad)}</span></td>
+          <td><span class="badge ${statusBadge[c.status] || ''}">${esc(c.status)}</span></td>
+          <td style="color:#777;max-width:160px;white-space:pre-wrap;word-break:break-word">${esc(c.note || '-')}</td>
+          <td style="color:#aaa;font-size:0.8rem;white-space:nowrap">${c.date}</td>
+          <td>
+            <div class="actions">
+              <button class="btn btn-edit" onclick="editCustomer('${c.id}')">Düzenle</button>
+              <button class="btn btn-danger" onclick="deleteCustomer('${c.id}')">Sil</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    updateStats();
+  }
+
+  function esc(str) {
+    return String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+
+  function openModal(id = null) {
+    editingId = id;
+    const modal = document.getElementById('modal-backdrop');
+    document.getElementById('modal-title').textContent = id ? 'Müşteriyi Düzenle' : 'Yeni Müşteri Ekle';
+
+    if (id) {
+      const c = customers.find(x => x.id === id);
+      document.getElementById('f-name').value   = c.name;
+      document.getElementById('f-phone').value  = c.phone;
+      document.getElementById('f-ad').value     = c.ad;
+      document.getElementById('f-status').value = c.status;
+      document.getElementById('f-note').value   = c.note || '';
+    } else {
+      document.getElementById('f-name').value   = '';
+      document.getElementById('f-phone').value  = '';
+      document.getElementById('f-ad').value     = 'Facebook';
+      document.getElementById('f-status').value = 'Yeni';
+      document.getElementById('f-note').value   = '';
+    }
+
+    modal.classList.add('open');
+    document.getElementById('f-name').focus();
+  }
+
+  function closeModal() {
+    document.getElementById('modal-backdrop').classList.remove('open');
+    editingId = null;
+  }
+
+  function saveCustomer() {
+    const name   = document.getElementById('f-name').value.trim();
+    const phone  = document.getElementById('f-phone').value.trim();
+    const ad     = document.getElementById('f-ad').value;
+    const status = document.getElementById('f-status').value;
+    const note   = document.getElementById('f-note').value.trim();
+
+    if (!name || !phone) {
+      alert('Müşteri adı ve telefon zorunludur.');
+      return;
+    }
+
+    if (editingId) {
+      const idx = customers.findIndex(c => c.id === editingId);
+      customers[idx] = { ...customers[idx], name, phone, ad, status, note };
+    } else {
+      customers.unshift({
+        id: Date.now().toString(),
+        name, phone, ad, status, note,
+        date: new Date().toLocaleDateString('tr-TR'),
+      });
+    }
+
+    save();
+    render();
+    closeModal();
+  }
+
+  function editCustomer(id) {
+    openModal(id);
+  }
+
+  function deleteCustomer(id) {
+    if (!confirm('Bu müşteriyi silmek istediğinize emin misiniz?')) return;
+    customers = customers.filter(c => c.id !== id);
+    save();
+    render();
+  }
+
+  // Backdrop click to close
+  document.getElementById('modal-backdrop').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // Enter key in modal
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  render();
+</script>
+</body>
+</html>
